@@ -1,0 +1,98 @@
+log-level = "info"
+
+server-id = 55000
+
+## meta 文件地址
+meta = "./syncer5000.meta"
+
+worker-count = 1
+batch = 10
+
+## pprof 调试地址, Prometheus 也可以通过该地址拉取 syncer metrics
+## 将 127.0.0.1 修改为相应主机 IP 地址
+status-addr = "10.1.1.191:55000"
+
+# 注意: skip-sqls 已经废弃, 请使用 skip-ddls.
+# skip-ddls 可以跳过与 TiDB 不兼容的 DDL 语句，支持正则语法。
+# skip-ddls = ["^CREATE\\s+USER"]
+
+# 注意: skip-events 已经废弃, 请使用 skip-dmls 
+# skip-dmls 用于跳过 DML 语句. type 字段取值为 'insert', 'update', 'delete'。
+# 下面的例子为跳过 foo.bar 表的所有 delete 语句。
+# [[skip-dmls]]
+# db-name = "foo"
+# tbl-name = "bar"
+# type = "delete"
+# 
+# 下面的例子为跳过所有表的 delete 语句。
+# [[skip-dmls]]
+# type = "delete"
+# 
+# 下面的例子为跳过 foo 库中所有表的 delete 语句。 
+# [[skip-dmls]]
+# db-name = "foo"
+# type = "delete"
+
+## 指定要同步数据库名；支持正则匹配，表达式语句必须以 `~` 开始
+#replicate-do-db = ["~^b.*","s1"]
+replicate-do-db = ["rz_user","rz_account","rz_activity","rz_article","rz_borrow","rz_s","rz_tcc"]
+
+## 指定要同步的 db.table 表
+## db-name 与 tbl-name 不支持 `db-name ="dbname，dbname2"` 格式
+#[[replicate-do-table]]
+#db-name ="dbname"
+#tbl-name = "table-name"
+ 
+#[[replicate-do-table]]
+#db-name ="dbname1"
+#tbl-name = "table-name1"
+
+## 指定要同步的 db.table 表；支持正则匹配，表达式语句必须以 `~` 开始
+#[[replicate-do-table]]
+#db-name ="test"
+#tbl-name = "~^a.*"
+
+## 指定**忽略**同步数据库；支持正则匹配，表达式语句必须以 `~` 开始
+#replicate-ignore-db = ["~^b.*","s1"]
+replicate-ignore-db = ["mysql","sys","information_schema","performance_schema"]
+
+## 指定**忽略**同步数据库
+## db-name & tbl-name 不支持 `db-name ="dbname，dbname2"` 语句格式
+#[[replicate-ignore-table]]
+#db-name = "your_db"
+#tbl-name = "your_table"
+
+## 指定要**忽略**同步数据库名；支持正则匹配，表达式语句必须以 `~` 开始
+#[[replicate-ignore-table]]
+#db-name ="test"
+#tbl-name = "~^a.*"
+
+# sharding 同步规则，采用 wildcharacter
+# 1. 星号字符 (*) 可以匹配零个或者多个字符,
+#    例子, doc* 匹配 doc 和 document, 但是和 dodo 不匹配;
+#    星号只能放在 pattern 结尾，并且一个 pattern 中只能有一个
+# 2. 问号字符 (?) 匹配任一一个字符
+
+#[[route-rules]]
+#pattern-schema = "route_*"
+#pattern-table = "abc_*"
+#target-schema = "route"
+#target-table = "abc"
+
+#[[route-rules]]
+#pattern-schema = "route_*"
+#pattern-table = "xyz_*"
+#target-schema = "route"
+#target-table = "xyz"
+
+[from]
+host = "172.16.102.141"
+user = "mysqlha"
+password = ""
+port = 5000
+
+[to]
+host = "10.1.1.65"
+user = "root"
+password = ""
+port = 4000
