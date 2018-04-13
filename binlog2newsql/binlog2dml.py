@@ -8,7 +8,8 @@
 import sys
 import json
 import pymysql
-import time, datetime
+import time
+import datetime
 
 from pymysqlreplication import BinLogStreamReader
 from pymysqlreplication.row_event import (
