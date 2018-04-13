@@ -8,7 +8,7 @@
 import sys
 import json
 import pymysql
-import datetime
+import time, datetime
 
 from pymysqlreplication import BinLogStreamReader
 from pymysqlreplication.row_event import (
@@ -18,34 +18,38 @@ from pymysqlreplication.row_event import (
 
     
     
-def loadPosition(filename="/home/tidb/binlog2newsql/config/meta5000.json"):
+def loadPosition(filename="/home/tidb/binlog2dml/config/meta5000.json"):
     with open(filename,"r") as fd:
         d = json.load(fd)
         print("savePosition加载入文件完成...\n", d)
         return d
     
 def savePosition(d):
-    with open("/home/tidb/binlog2newsql/config/meta5000.json","w") as fd:
+    with open("/home/tidb/binlog2dml/config/meta5000.json","w") as fd:
         json.dump(d,fd)
         print("savePosition存入文件完成...\n", d)
         
 SYNC_POSITION = loadPosition()
-MYSQL_SETTINGS = {'host': '172.16.102.141', 'port': 5000, 'user': 'replicator', 'passwd': ''}
+MYSQL_SETTINGS = {'host': '172.16.102.141', 'port': 5000, 'user': 'replicator', 'passwd': 'uoKos98RwA'}
 DATA_MASKING = ["card_id","email","pre_mobile","reg_mobile","card_no","id_no","bank_no","mobile"]
 
-stream = BinLogStreamReader(
-    connection_settings=MYSQL_SETTINGS, 
-    server_id=1024,
-    log_file=SYNC_POSITION['master_log_file'],
-    log_pos=SYNC_POSITION['master_log_pos'],
-    #auto_position="97d304fb-f5d3-11e7-b1d5-00163f006549:1-3770281",    
-    blocking=True,
-    resume_stream=True, 
-    # only_schemas,only_tables只能过滤DML语句
-    only_schemas=["rz_account", "rz_user"],
-    only_tables=["rz_account_bank", "rz_user", "rz_cg_user_ext"],
-    only_events=[DeleteRowsEvent, WriteRowsEvent, UpdateRowsEvent]
-    )
+
+
+def binLogStreamReader():
+    stream = BinLogStreamReader(
+        connection_settings=MYSQL_SETTINGS, 
+        server_id=1024,
+        log_file=SYNC_POSITION['master_log_file'],
+        log_pos=SYNC_POSITION['master_log_pos'],
+        #auto_position="97d304fb-f5d3-11e7-b1d5-00163f006549:1-3770281",    
+        blocking=True,
+        resume_stream=True, 
+        # only_schemas,only_tables只能过滤DML语句
+        only_schemas=["rz_account", "rz_user"],
+        only_tables=["rz_account_bank", "rz_user", "rz_cg_user_ext"],
+        only_events=[DeleteRowsEvent, WriteRowsEvent, UpdateRowsEvent]
+        )
+    return stream
     
 
         
@@ -69,10 +73,15 @@ def exceuteSQL(sql):
 
 
 def main():    
+    stream = binLogStreamReader()
     try:
         for binlogevent in stream:
             #binlogevent.dump() 
-            print("event_type",binlogevent.event_type)
+            time_local=time.localtime(binlogevent.timestamp)
+            event_time=time.strftime("%Y-%m-%d %H:%M:%S",time_local)
+            print("event_time:",event_time)
+            print("event_type:",binlogevent.event_type)
+            print("event_size:",binlogevent.event_size)
             Position = {
                 #"schema": binlogevent.schema, 
                 #"table": binlogevent.table, 
